@@ -2,8 +2,18 @@ const parse = require("csv-parse");
 var fs = require("fs");
 const axios = require("axios");
 const PromisePool = require("@supercharge/promise-pool");
+const createCsvWriter = require("csv-writer").createObjectCsvWriter;
 
 require("dotenv").config();
+
+const csvWriter = createCsvWriter({
+  path: "out.csv",
+  header: [
+    { id: "id", title: "ID" },
+    { id: "status", title: "STATUS" },
+    { id: "email", title: "EMAIL" },
+  ],
+});
 
 const OKTA_BASE_URl = process.env.OKTA_BASE_URl;
 const OKTA_KEY = process.env.OKTA_KEY;
@@ -13,6 +23,8 @@ const PRIMARY_EMAIL_COLUMN = "Primary email";
 const SECONDARY_EMAIl_COLUMN = "Secondary email";
 const USER_TYPE = "User type";
 
+const inputFile = process.argv.splice(2);
+console.log(inputFile);
 const api = axios.create({
   baseURL: OKTA_BASE_URl,
   timeout: 10000,
@@ -29,7 +41,7 @@ var twirlTimer = function () {
 };
 
 const parser = fs
-  .createReadStream(__dirname + "/input2.csv")
+  .createReadStream(__dirname + inputFile[0])
   .pipe(parse({ skip_empty_lines: true, columns: true }));
 
 async function parseCsv(parser) {
@@ -98,8 +110,12 @@ async function getUserFromOkta(email) {
     .process(async ([key, value]) => {
       console.log("Processing..", key);
       const users = await getUserFromOkta(key);
+      if (users.length > 0) {
+        const user = users[0];
+        return { id: user.id, status: user.status, email: user.profile.email };
+      }
       return users;
     });
   var finalUsersList = [].concat.apply([], results);
-  console.log(finalUsersList);
+  await csvWriter.writeRecords(finalUsersList); // finish writing
 })();
