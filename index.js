@@ -106,6 +106,7 @@ async function getUserFromOkta(email) {
   // .splice(
   //   Object.entries(1, csvUserObject).length - 2000
   // );
+  // PromisePoll to handle concurrently limit of Okta
   const { results, errors } = await PromisePool.withConcurrency(
     CONCURRENCY_LIMIT
   )
