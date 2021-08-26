@@ -22,6 +22,7 @@ const USER_ID_COLUMN = "User Id";
 const PRIMARY_EMAIL_COLUMN = "Primary email";
 const SECONDARY_EMAIl_COLUMN = "Secondary email";
 const USER_TYPE = "User type";
+const CONCURRENCY_LIMIT = 10;
 
 const inputFile = process.argv.splice(2);
 console.log(inputFile);
@@ -105,7 +106,9 @@ async function getUserFromOkta(email) {
   // .splice(
   //   Object.entries(1, csvUserObject).length - 2000
   // );
-  const { results, errors } = await PromisePool.withConcurrency(10)
+  const { results, errors } = await PromisePool.withConcurrency(
+    CONCURRENCY_LIMIT
+  )
     .for(serviceUsers)
     .process(async ([key, value]) => {
       console.log("Processing..", key);
